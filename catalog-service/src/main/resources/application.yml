@@ -5,10 +5,10 @@ spring:
   application:
     name: catalog-service
   datasource:
-    url: jdbc:postgresql://localhost:5432/catalog_db
-    username: postgres
-    password: password
+    url: jdbc:postgresql://localhost:5433/catalog_db
+    username: app
+    password: secret
   jpa:
     hibernate:
-      ddl-auto: validate
+      ddl-auto: update
     show-sql: true
