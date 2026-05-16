@@ -21,8 +21,8 @@ spring:
         filters:
         - StripPrefix=0
 
-security:
-  oauth2:
-    resourceserver:
-      jwt:
-        issuer-uri: http://localhost:8081/realms/auction
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: http://localhost:8081/realms/auction

@@ -4,11 +4,11 @@ server:
 spring:
   application:
     name: user-service
-datasource:
-  url: jdbc:postgresql://localhost:5432/users_db
-  username: postgres
-  password: password
-jpa:
-  hibernate:
-    ddl-auto: update
-  show-sql: true
+  datasource:
+    url: jdbc:postgresql://localhost:5432/users_db
+    username: app
+    password: secret
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
