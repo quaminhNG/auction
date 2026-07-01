@@ -5,10 +5,14 @@ import com.example.biddingservice.entity.Auction;
 import com.example.biddingservice.entity.AuctionStatus;
 import com.example.biddingservice.entity.Bid;
 import com.example.biddingservice.entity.BidStatus;
+import com.example.biddingservice.entity.IdempotencyKey;
+import com.example.biddingservice.exception.DuplicateRequestException;
 import com.example.biddingservice.exception.ResourceNotFoundException;
 import com.example.biddingservice.repository.AuctionRepository;
 import com.example.biddingservice.repository.BidRepository;
+import com.example.biddingservice.repository.IdempotencyKeyRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -21,9 +25,20 @@ public class BidService {
 
     private final AuctionRepository auctionRepository;
     private final BidRepository bidRepository;
+    private final IdempotencyKeyRepository idempotencyKeyRepository;
 
     @Transactional
-    public BidResponse placeBid(UUID auctionId, UUID bidderId, BigDecimal amount) {
+    public BidResponse placeBid(UUID auctionId, UUID bidderId, BigDecimal amount, String idempotencyKey) {
+        if (idempotencyKey != null && !idempotencyKey.isEmpty()) {
+            if (idempotencyKeyRepository.existsById(idempotencyKey)) {
+                throw new DuplicateRequestException("Request with this idempotency key has already been processed.");
+            }
+            try {
+                idempotencyKeyRepository.saveAndFlush(IdempotencyKey.builder().id(idempotencyKey).build());
+            } catch (DataIntegrityViolationException e) {
+                throw new DuplicateRequestException("Request with this idempotency key is already being processed.");
+            }
+        }
         Auction auction = auctionRepository.findByIdWithLock(auctionId)
                 .orElseThrow(() -> new ResourceNotFoundException("Auction not found"));
 

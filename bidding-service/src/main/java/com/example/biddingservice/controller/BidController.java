@@ -22,9 +22,10 @@ public class BidController {
     public ResponseEntity<BidResponse> placeBid(
             @PathVariable UUID auctionId,
             @Valid @RequestBody PlaceBidRequest request,
-            @RequestHeader(value = "X-User-Id", defaultValue = "00000000-0000-0000-0000-000000000002") UUID bidderId
+            @RequestHeader(value = "X-User-Id", defaultValue = "00000000-0000-0000-0000-000000000002") UUID bidderId,
+            @RequestHeader(value = "X-Idempotency-Key", required = false) String idempotencyKey
     ) {
-        BidResponse response = bidService.placeBid(auctionId, bidderId, request.getAmount());
+        BidResponse response = bidService.placeBid(auctionId, bidderId, request.getAmount(), idempotencyKey);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 }
