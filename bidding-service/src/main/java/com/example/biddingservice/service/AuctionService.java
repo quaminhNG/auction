@@ -4,12 +4,16 @@ import com.example.biddingservice.dto.AuctionResponse;
 import com.example.biddingservice.dto.CreateAuctionRequest;
 import com.example.biddingservice.entity.Auction;
 import com.example.biddingservice.entity.AuctionStatus;
+import com.example.biddingservice.entity.Order;
+import com.example.biddingservice.entity.OrderStatus;
 import com.example.biddingservice.repository.AuctionRepository;
+import com.example.biddingservice.repository.OrderRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Service
@@ -18,6 +22,7 @@ import java.util.UUID;
 public class AuctionService {
 
     private final AuctionRepository auctionRepository;
+    private final OrderRepository orderRepository;
 
     @Transactional
     public AuctionResponse createAuction(CreateAuctionRequest request, UUID sellerId) {
@@ -109,5 +114,46 @@ public class AuctionService {
 
         auction.setStatus(AuctionStatus.CANCELLED);
         auctionRepository.save(auction);
+    }
+
+    @Transactional
+    public void activateAuction(UUID id) {
+        log.info("Activating auction {}", id);
+        Auction auction = auctionRepository.findByIdWithLock(id)
+                .orElseThrow(() -> new com.example.biddingservice.exception.ResourceNotFoundException("Auction not found"));
+
+        if (auction.getStatus() == AuctionStatus.SCHEDULED && !auction.getStartTime().isAfter(LocalDateTime.now())) {
+            auction.setStatus(AuctionStatus.ACTIVE);
+            auctionRepository.save(auction);
+            log.info("Auction {} is now ACTIVE", id);
+        }
+    }
+
+    @Transactional
+    public void closeAuction(UUID id) {
+        log.info("Closing auction {}", id);
+        Auction auction = auctionRepository.findByIdWithLock(id)
+                .orElseThrow(() -> new com.example.biddingservice.exception.ResourceNotFoundException("Auction not found"));
+
+        if (auction.getStatus() == AuctionStatus.ACTIVE && !auction.getEndTime().isAfter(LocalDateTime.now())) {
+            auction.setStatus(AuctionStatus.ENDED);
+            
+            if (auction.getHighestBidderId() != null) {
+                Order order = Order.builder()
+                        .auctionId(auction.getId())
+                        .buyerId(auction.getHighestBidderId())
+                        .watchId(auction.getWatchId())
+                        .totalAmount(auction.getCurrentHighestBid())
+                        .status(OrderStatus.PENDING)
+                        .idempotencyKey("ORDER_" + auction.getId().toString())
+                        .build();
+                orderRepository.save(order);
+                log.info("Created order {} for auction {}", order.getId(), auction.getId());
+            } else {
+                log.info("Auction {} ended with no bids", auction.getId());
+            }
+            
+            auctionRepository.save(auction);
+        }
     }
 }

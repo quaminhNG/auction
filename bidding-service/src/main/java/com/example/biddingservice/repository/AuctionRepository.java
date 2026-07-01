@@ -18,6 +18,7 @@ import java.util.UUID;
 @Repository
 public interface AuctionRepository extends JpaRepository<Auction, UUID> {
     List<Auction> findByStatusAndEndTimeBefore(AuctionStatus status, LocalDateTime endTime);
+    List<Auction> findByStatusAndStartTimeBefore(AuctionStatus status, LocalDateTime startTime);
 
     @Lock(LockModeType.PESSIMISTIC_WRITE) //khóa row
     @Query("SELECT a FROM Auction a WHERE a.id = :id")
