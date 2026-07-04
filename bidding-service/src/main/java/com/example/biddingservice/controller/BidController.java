@@ -28,4 +28,10 @@ public class BidController {
         BidResponse response = bidService.placeBid(auctionId, bidderId, request.getAmount(), idempotencyKey);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
+
+    @GetMapping("/leaderboard")
+    public ResponseEntity<java.util.List<com.example.biddingservice.dto.LeaderboardEntryProjection>> getLeaderboard(
+            @PathVariable UUID auctionId) {
+        return ResponseEntity.ok(bidService.getLeaderboard(auctionId));
+    }
 }

@@ -14,6 +14,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.UUID;
 
 @Service
@@ -155,5 +156,11 @@ public class AuctionService {
             
             auctionRepository.save(auction);
         }
+    }
+
+    @Transactional(readOnly = true)
+    public List<com.example.biddingservice.dto.PriceHistoryProjection> getPriceHistory(UUID watchId) {
+        log.info("Fetching price history for watch {}", watchId);
+        return auctionRepository.getPriceHistory(watchId);
     }
 }

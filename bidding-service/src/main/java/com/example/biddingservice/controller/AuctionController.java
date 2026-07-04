@@ -56,4 +56,10 @@ public class AuctionController {
         auctionService.cancelAuction(id, sellerId);
         return ResponseEntity.noContent().build();
     }
+
+    @GetMapping("/watches/{watchId}/price-history")
+    public ResponseEntity<java.util.List<com.example.biddingservice.dto.PriceHistoryProjection>> getPriceHistory(
+            @PathVariable UUID watchId) {
+        return ResponseEntity.ok(auctionService.getPriceHistory(watchId));
+    }
 }

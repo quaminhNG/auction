@@ -17,6 +17,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.util.List;
 import java.util.UUID;
 
 @Service
@@ -75,5 +76,10 @@ public class BidService {
 
         return BidResponse.from(bid, auction); // do data nhận về từ 2 nguồn nền cần tạo DTO BidResponse dùng builder để
                                                // gộp vào cho gọn.
+    }
+
+    @Transactional(readOnly = true)
+    public List<com.example.biddingservice.dto.LeaderboardEntryProjection> getLeaderboard(UUID auctionId) {
+        return bidRepository.getAuctionLeaderboard(auctionId);
     }
 }
