@@ -10,12 +10,16 @@ import com.example.biddingservice.repository.AuctionRepository;
 import com.example.biddingservice.repository.OrderRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import com.example.biddingservice.client.InventoryClient;
+import com.example.biddingservice.dto.ReserveRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
+
+import static com.example.biddingservice.constant.AuctionConstants.DEFAULT_AUCTION_QUANTITY;
 
 @Service
 @RequiredArgsConstructor
@@ -24,6 +28,7 @@ public class AuctionService {
 
     private final AuctionRepository auctionRepository;
     private final OrderRepository orderRepository;
+    private final InventoryClient inventoryClient;
 
     @Transactional
     public AuctionResponse createAuction(CreateAuctionRequest request, UUID sellerId) {
@@ -150,6 +155,16 @@ public class AuctionService {
                         .build();
                 orderRepository.save(order);
                 log.info("Created order {} for auction {}", order.getId(), auction.getId());
+
+                try {
+                    inventoryClient.reserveStock(auction.getWatchId(), new ReserveRequest(DEFAULT_AUCTION_QUANTITY));
+                    log.info("Reserved {} stock for watch {} upon auction {}", DEFAULT_AUCTION_QUANTITY, auction.getWatchId(), auction.getId());
+                } catch (Exception e) {
+                    log.error("Failed to reserve stock for watch {} upon auction {}", auction.getWatchId(), auction.getId(), e);
+                    // Depending on business requirements, you might want to handle this differently
+                    // e.g. throw an exception to rollback the transaction, or send an alert.
+                }
+
             } else {
                 log.info("Auction {} ended with no bids", auction.getId());
             }
